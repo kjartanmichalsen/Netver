@@ -23,18 +23,17 @@ static const uint8_t D10  = 1;
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
 
 // Nokia 5110 pins definition
-// Serial clock out (SCLK)
-// Serial data out (DIN)
-// Data/Command select (D/C)
-// LCD chip select (CS)
-// LCD reset (RST)
+// Serial clock out (SCLK) D6
+// Serial data out (DIN) DN MOSI D3
+// Data/Command select (D/C) D7
+// LCD chip select (CS) SCE D1
+// LCD reset (RST) D8
 Adafruit_PCD8544 display = Adafruit_PCD8544(12, 0, 13, 5, 15);
 
 WiFiManager wifiManager;
  
 const char* host = "www.yr.no";
-//String url = "/place/Norway/Oslo/Oslo/Kværnerveien/varsel.xml"; // Bytt ut med din lokasjon
-String url = "/place/Norway/Hordaland/Bergen/Hordviktunnelen/varsel.xml"; // Bytt ut med din lokasjon
+String url = "/place/Norway/Oslo/Oslo/Kværnerveien/varsel.xml"; // Bytt ut med din lokasjon
 
 // finding values
 boolean startRead = false;
@@ -48,10 +47,11 @@ String weather1;
 String temperature2;
 String weather2;
 String timefrom;
+String localTemperature;
 
 int loopCounter=0;
 int displayView=1;
-int ledPin = 2; // 2 Pin for rain alert. Use 16 for built in red, and 2 for blue
+int ledPin = 16; // 2 Pin for rain alert. Use 16 for built in red, and 2 for blue
 int alertRain = 0;
 
 // Rutine for å skrive ut en melding til skjerm 
@@ -180,6 +180,7 @@ if(loopCounter==0){
   temperature2 = "";
   weather2 = "";
   timefrom = "";
+  localTemperature = "";
   
 
   displayInfo("connecting to ");
@@ -208,7 +209,7 @@ if(loopCounter==0){
   client.print(String("GET ") + url + " HTTP/1.1\r\n" +
                "Host: " + host + "\r\n" + 
                "Connection: close\r\n\r\n");
-  delay(500);
+  delay(2000);
   
   // Read all the lines of the reply from server and print them to Serial
  
@@ -251,7 +252,7 @@ if(loopCounter==0){
                 displayInfo(dataValue); // skriv ut linjen til skjerm
                 tempValue = ""; // nullstill streng
                 stringPos = 0; // Nullstill teller+
-                
+
                 stage++;
 
                }else{
@@ -334,7 +335,7 @@ if(loopCounter==0){
          displayInfo("All done!: "+stage);
          break;
         }
-        
+
        if(alertRain > 0 ){
          digitalWrite(ledPin, LOW);
         } else {
@@ -349,22 +350,61 @@ if(loopCounter==0){
   }
 
   displayInfo("closing connection");
+  
+// read extra info
+    // Use WiFiClient class to create TCP connections
+  if (!client.connect("d7.no", httpPort)) {
+    displayInfo("connection failed");
+    return;
+  }
 
+  // This will send the request to the server
+  client.print(String("GET ") + "/ver/test.txt" + " HTTP/1.1\r\n" +
+               "Host: " + "d7.no" + "\r\n" + 
+               "Connection: close\r\n\r\n");
+  displayInfo("Connecting to d7.no");
+  delay(3000);
+
+    while(client.available()){
+      char c = client.read();
+
+      if (c == '<' ) { // Sjekk om vi har starten på en xml node
+        startRead = true; // i såfall, la oss lese inn
+      }
+
+        if (c == '>' ) { // ferdig med en xml-node
+          startRead = false; // slutt å lese
+          displayInfo(tempValue); // skriv ut linjen til konsoll
+          localTemperature = tempValue;
+          tempValue = ""; // nullstill streng
+          stringPos = 0; // Nullstill teller
+        }
+
+         if(startRead == true){
+          if (c == '<' ) { } else {  // Sjekk om vi har starten på en xml node
+              charValue = String(c); // konverter til string
+              tempValue = tempValue + charValue; // legg til string
+            }
+         
+       }
+    }
  } //end loopcounter
 
   
   
  loopCounter++;
- if(loopCounter==200){loopCounter=0;}
+ if(loopCounter==300){loopCounter=0;}
 
-// 3 sekunder x 200 = 10 minutter. Oppdater med data fra yr hvert 10. minutt. 
+// 2 sekunder x 300 = 10 minutter. Oppdater med data fra yr hvert 10. minutt. 
   
   display.clearDisplay();
   if(displayView==1){ 
-    display.setTextSize(4);
+    display.setTextSize(2);
     display.setTextColor(BLACK);
     display.setCursor(0,0);
-    display.println(""+temperature1+"");
+    display.println(""+localTemperature+"");
+    display.setTextSize(2);
+    display.println("yr:"+temperature1+"");
    
 
     }
