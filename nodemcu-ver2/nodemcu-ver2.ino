@@ -1,4 +1,4 @@
- /* PINS for nodemcu 0.9
+ /* PINS for nodemcu 0.9 
 static const uint8_t D0   = 16;
 static const uint8_t D1   = 5;
 static const uint8_t D2   = 4;
@@ -10,7 +10,7 @@ static const uint8_t D7   = 13;
 static const uint8_t D8   = 15;
 static const uint8_t D9   = 3;
 static const uint8_t D10  = 1;
- */
+*/
  
 #include <ESP8266WiFi.h>
 
@@ -24,11 +24,13 @@ static const uint8_t D10  = 1;
 
 // Nokia 5110 pins definition
 // Serial clock out (SCLK)
-// Serial data out (DIN)
+// Serial data out (DIN) (DN<MOSI>)
 // Data/Command select (D/C)
-// LCD chip select (CS)
+// LCD chip select (CS) (SCE)
 // LCD reset (RST)
+
 Adafruit_PCD8544 display = Adafruit_PCD8544(2, 0, 4, 5, 16);
+
 
 WiFiManager wifiManager;
  
