@@ -1,3 +1,5 @@
+* This does no longer work, as Yr changed the APIs *
+
 XML parsing of YR.no weather for Arduino / esp8266 and the Nokia 5110 Display / PDC8544
 
 This project uses the open apis of api.yr.no.
